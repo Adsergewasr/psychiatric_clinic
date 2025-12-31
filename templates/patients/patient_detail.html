@@ -1,0 +1,357 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ patient.full_name }} - Психиатрическая больница{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'patients:patient_list' %}">Пациенты</a></li>
+<li class="breadcrumb-item active">{{ patient.last_name }} {{ patient.first_name }}</li>
+{% endblock %}
+
+{% block page_title %}
+<i class="bi bi-person-vcard me-2"></i>Карта пациента
+<small class="text-muted ms-2">ИБ №{{ patient.case_number }}</small>
+{% endblock %}
+
+{% block content %}
+<!-- Кнопки действий -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="btn-group" role="group">
+            <a href="{% url 'patients:patient_list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Назад к списку
+            </a>
+            
+            {% if can_edit %}
+            <a href="{% url 'patients:patient_update' patient.pk %}" class="btn btn-primary">
+                <i class="bi bi-pencil me-1"></i>Редактировать
+            </a>
+            {% endif %}
+            
+            {% if patient.status == 'HOSPITALIZED' and can_edit %}
+            <a href="{% url 'patients:patient_discharge' patient.pk %}" class="btn btn-success" onclick="return confirm('Выписать пациента {{ patient.full_name }}?')">
+                <i class="bi bi-box-arrow-right me-1"></i>Выписать
+            </a>
+            {% endif %}
+            
+            {% if can_delete %}
+            <a href="{% url 'patients:patient_delete' patient.pk %}" class="btn btn-danger">
+                <i class="bi bi-trash me-1"></i>Удалить
+            </a>
+            {% endif %}
+            
+            <button type="button" class="btn btn-info" onclick="window.print()">
+                <i class="bi bi-printer me-1"></i>Печать
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Основная информация -->
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-person-lines-fill me-2"></i>Основные данные
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <strong>ФИО:</strong><br>
+                        {{ patient.last_name }} {{ patient.first_name }} {{ patient.middle_name }}
+                    </div>
+                    <div class="col-md-2">
+                        <strong>Пол:</strong><br>
+                        {{ patient.get_gender_display }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Дата рождения:</strong><br>
+                        {{ patient.birth_date|date:"d.m.Y" }} ({{ patient.age }} лет)
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Место рождения:</strong><br>
+                        {{ patient.birth_place|default:"-" }}
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        <strong>Гражданство:</strong><br>
+                        {{ patient.citizenship }}
+                    </div>
+                    <div class="col-md-8">
+                        <strong>Адрес:</strong><br>
+                        {{ patient.address }}
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Телефон:</strong><br>
+                        {{ patient.phone|default:"Не указан" }}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Работа/должность:</strong><br>
+                        {{ patient.workplace|default:"-" }} / {{ patient.position|default:"-" }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Данные госпитализации -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-hospital me-2"></i>Данные госпитализации
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Дата поступления:</strong><br>
+                        {{ patient.admission_date|date:"d.m.Y H:i" }}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Откуда поступил:</strong><br>
+                        {{ patient.admission_from|default:"-" }}
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Кем доставлен:</strong><br>
+                        {{ patient.delivered_by|default:"-" }}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Диагноз направившего учреждения:</strong><br>
+                        {{ patient.referral_diagnosis|default:"-"|linebreaks }}
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="row">
+                    <div class="col-md-8">
+                        <strong>Диагноз при поступлении:</strong><br>
+                        {{ patient.admission_diagnosis|linebreaks }}
+                    </div>
+                    <div class="col-md-4">
+                        <strong>Код МКБ-10:</strong><br>
+                        {{ patient.admission_mkb_code|default:"-" }}
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Лечащий врач:</strong><br>
+                        {{ patient.attending_physician.get_full_name|default:patient.attending_physician.username|default:"Не назначен" }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Данные выписки -->
+        {% if patient.status != 'HOSPITALIZED' %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-calendar-check me-2"></i>Данные выписки
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <strong>Дата выписки:</strong><br>
+                        {{ patient.discharge_date|date:"d.m.Y H:i" }}
+                    </div>
+                    <div class="col-md-4">
+                        <strong>Исход заболевания:</strong><br>
+                        {{ patient.get_outcome_display|default:"-" }}
+                    </div>
+                    <div class="col-md-4">
+                        <strong>Трудоспособность:</strong><br>
+                        {{ patient.get_work_capacity_display|default:"-" }}
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="row">
+                    <div class="col-md-8">
+                        <strong>Диагноз при выписке:</strong><br>
+                        {{ patient.discharge_diagnosis|linebreaks|default:"-" }}
+                    </div>
+                    <div class="col-md-4">
+                        <strong>Код МКБ-10:</strong><br>
+                        {{ patient.discharge_mkb_code|default:"-" }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Боковая панель -->
+    <div class="col-md-4">
+        <!-- Статус -->
+        <div class="card mb-4">
+            <div class="card-body text-center">
+                <h4 class="card-title">Статус пациента</h4>
+                <span class="badge {% if patient.status == 'HOSPITALIZED' %}bg-warning{% elif patient.status == 'DISCHARGED' %}bg-success{% elif patient.status == 'DIED' %}bg-danger{% else %}bg-info{% endif %} fs-5 px-4 py-2">
+                    {{ patient.get_status_display }}
+                </span>
+                {% if patient.status != 'HOSPITALIZED' and patient.discharge_date %}
+                <p class="mt-3 mb-0">
+                    <small class="text-muted">Выписан: {{ patient.discharge_date|date:"d.m.Y" }}</small>
+                </p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Документы -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-file-text me-2"></i>Документы
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong>Паспорт:</strong><br>
+                    {{ patient.passport_series }} {{ patient.passport_number }}<br>
+                    <small class="text-muted">Выдан: {{ patient.passport_issued_by|default:"-"|truncatechars:30 }}</small>
+                </div>
+                
+                <div class="mb-3">
+                    <strong>СНИЛС:</strong><br>
+                    {{ patient.snils|default:"Не указан" }}
+                </div>
+                
+                <div>
+                    <strong>Страховой полис:</strong><br>
+                    {{ patient.insurance_policy|default:"Не указан" }}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Социальные данные -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-person-badge me-2"></i>Социальные данные
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong>Семейное положение:</strong><br>
+                    {{ patient.get_marital_status_display }}
+                </div>
+                
+                <div class="mb-3">
+                    <strong>Образование:</strong><br>
+                    {{ patient.get_education_display }}
+                </div>
+                
+                <div>
+                    <strong>Профессия:</strong><br>
+                    {{ patient.profession|default:"-" }}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Системная информация -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-info-circle me-2"></i>Системная информация
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-2">
+                    <small class="text-muted">Создано:</small><br>
+                    {{ patient.created_at|date:"d.m.Y H:i" }}
+                </div>
+                
+                <div class="mb-2">
+                    <small class="text-muted">Кем создано:</small><br>
+                    {{ patient.created_by.get_full_name|default:patient.created_by.username }}
+                </div>
+                
+                <div>
+                    <small class="text-muted">Последнее изменение:</small><br>
+                    {{ patient.updated_at|date:"d.m.Y H:i" }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Примечания -->
+{% if patient.notes %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-sticky me-2"></i>Примечания
+                </h5>
+            </div>
+            <div class="card-body">
+                {{ patient.notes|linebreaks }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- История госпитализаций -->
+{% if hospitalizations %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-clock-history me-2"></i>История госпитализаций
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Дата поступления</th>
+                                <th>Дата выписки</th>
+                                <th>Диагноз</th>
+                                <th>Отделение</th>
+                                <th>Исход</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for hosp in hospitalizations %}
+                            <tr>
+                                <td>{{ hosp.admission_date|date:"d.m.Y" }}</td>
+                                <td>{{ hosp.discharge_date|date:"d.m.Y"|default:"-" }}</td>
+                                <td>{{ hosp.diagnosis|truncatechars:50 }}</td>
+                                <td>{{ hosp.department }}</td>
+                                <td>{{ hosp.outcome|default:"-" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

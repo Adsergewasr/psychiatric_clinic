@@ -1,7 +1,253 @@
-{% extends "patients/base.html" %}
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Список пациентов - Психиатрическая больница{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'patients:patient_list' %}">Пациенты</a></li>
+<li class="breadcrumb-item active">Список</li>
+{% endblock %}
+
+{% block page_title %}
+<i class="bi bi-people me-2"></i>Список пациентов
+<span class="badge bg-secondary ms-2">{{ total_patients }}</span>
+{% endblock %}
 
 {% block content %}
-<h1>Список пациентов</h1>
-<p>Здесь будет список пациентов.</p>
-<a href="{% url 'patients:patient_create' %}" class="btn btn-success">Добавить пациента</a>
+<!-- Форма поиска -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                {{ form.query }}
+            </div>
+            <div class="col-md-2">
+                {{ form.status }}
+            </div>
+            <div class="col-md-2">
+                {{ form.gender }}
+            </div>
+            <div class="col-md-2">
+                {{ form.date_from }}
+            </div>
+            <div class="col-md-2">
+                {{ form.date_to }}
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search me-1"></i>Поиск
+                </button>
+                <a href="{% url 'patients:patient_list' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle me-1"></i>Сбросить
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Статистика по статусам -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <a href="?status=HOSPITALIZED" class="text-decoration-none">
+            <div class="card text-center border-warning">
+                <div class="card-body">
+                    <h3 class="card-title text-warning">{{ status_counts.HOSPITALIZED }}</h3>
+                    <p class="card-text text-muted">Госпитализировано</p>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-3">
+        <a href="?status=DISCHARGED" class="text-decoration-none">
+            <div class="card text-center border-success">
+                <div class="card-body">
+                    <h3 class="card-title text-success">{{ status_counts.DISCHARGED }}</h3>
+                    <p class="card-text text-muted">Выписано</p>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-3">
+        <a href="?status=TRANSFERRED" class="text-decoration-none">
+            <div class="card text-center border-info">
+                <div class="card-body">
+                    <h3 class="card-title text-info">{{ status_counts.TRANSFERRED }}</h3>
+                    <p class="card-text text-muted">Переведено</p>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-3">
+        <a href="?status=DIED" class="text-decoration-none">
+            <div class="card text-center border-danger">
+                <div class="card-body">
+                    <h3 class="card-title text-danger">{{ status_counts.DIED }}</h3>
+                    <p class="card-text text-muted">Умерло</p>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<!-- Таблица пациентов -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">Пациенты ({{ page_obj.paginator.count }})</h5>
+        <div>
+            <a href="{% url 'patients:patient_create' %}" class="btn btn-success btn-sm">
+                <i class="bi bi-person-plus me-1"></i>Добавить
+            </a>
+            <a href="{% url 'patients:patient_export' %}" class="btn btn-outline-secondary btn-sm ms-2">
+                <i class="bi bi-download me-1"></i>Экспорт
+            </a>
+        </div>
+    </div>
+    
+    <div class="card-body">
+        {% if page_obj.object_list %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>
+                            <a href="?sort={% if sort_by == 'case_number' %}-case_number{% else %}case_number{% endif %}" class="text-decoration-none">
+                                ИБ № {% if sort_by == 'case_number' %}↑{% elif sort_by == '-case_number' %}↓{% endif %}
+                            </a>
+                        </th>
+                        <th>
+                            <a href="?sort={% if sort_by == 'last_name' %}-last_name{% else %}last_name{% endif %}" class="text-decoration-none">
+                                ФИО {% if sort_by == 'last_name' %}↑{% elif sort_by == '-last_name' %}↓{% endif %}
+                            </a>
+                        </th>
+                        <th>Возраст</th>
+                        <th>
+                            <a href="?sort={% if sort_by == 'admission_date' %}-admission_date{% else %}admission_date{% endif %}" class="text-decoration-none">
+                                Дата поступления {% if sort_by == 'admission_date' %}↑{% elif sort_by == '-admission_date' %}↓{% endif %}
+                            </a>
+                        </th>
+                        <th>Статус</th>
+                        <th>Лечащий врач</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for patient in page_obj %}
+                    <tr class="{% if patient.status == 'HOSPITALIZED' %}table-warning{% elif patient.status == 'DISCHARGED' %}table-success{% elif patient.status == 'DIED' %}table-danger{% endif %}">
+                        <td>
+                            <span class="badge bg-dark">{{ patient.case_number }}</span>
+                        </td>
+                        <td>
+                            <strong>{{ patient.last_name }} {{ patient.first_name }} {{ patient.middle_name }}</strong><br>
+                            <small class="text-muted">{{ patient.phone|default:"Телефон не указан" }}</small>
+                        </td>
+                        <td>{{ patient.age }} лет</td>
+                        <td>{{ patient.admission_date|date:"d.m.Y" }}</td>
+                        <td>
+                            <span class="badge {% if patient.status == 'HOSPITALIZED' %}bg-warning{% elif patient.status == 'DISCHARGED' %}bg-success{% elif patient.status == 'DIED' %}bg-danger{% else %}bg-info{% endif %}">
+                                {{ patient.get_status_display }}
+                            </span>
+                            {% if patient.discharge_date %}
+                            <br><small class="text-muted">Выписан: {{ patient.discharge_date|date:"d.m.Y" }}</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if patient.attending_physician %}
+                            {{ patient.attending_physician.get_full_name|default:patient.attending_physician.username }}
+                            {% else %}
+                            <span class="text-muted">Не назначен</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'patients:patient_detail' patient.pk %}" class="btn btn-outline-primary" title="Просмотр">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{% url 'patients:patient_update' patient.pk %}" class="btn btn-outline-secondary" title="Редактировать">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                {% if patient.status == 'HOSPITALIZED' %}
+                                <a href="{% url 'patients:patient_discharge' patient.pk %}" class="btn btn-outline-success" title="Выписать" onclick="return confirm('Выписать пациента {{ patient.full_name }}?')">
+                                    <i class="bi bi-box-arrow-right"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Пагинация -->
+        {% if page_obj.paginator.num_pages > 1 %}
+        <nav aria-label="Пагинация">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if request.GET.query %}&query={{ request.GET.query }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                        Первая
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.query %}&query={{ request.GET.query }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                        Назад
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% if request.GET.query %}&query={{ request.GET.query }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                            {{ num }}
+                        </a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.query %}&query={{ request.GET.query }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                        Вперед
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.query %}&query={{ request.GET.query }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                        Последняя
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-people display-1 text-muted"></i>
+            <h4 class="text-muted mt-3">Пациенты не найдены</h4>
+            <p class="text-muted">Попробуйте изменить параметры поиска</p>
+            <a href="{% url 'patients:patient_create' %}" class="btn btn-success">
+                <i class="bi bi-person-plus me-1"></i>Добавить первого пациента
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Автоматическая отправка формы при изменении фильтров
+    document.querySelectorAll('select[name="status"], select[name="gender"]').forEach(function(select) {
+        select.addEventListener('change', function() {
+            this.form.submit();
+        });
+    });
+});
+</script>
 {% endblock %}

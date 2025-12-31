@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block title %}{{ title }} - Психиатрическая больница{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'patients:patient_list' %}">Пациенты</a></li>
+{% if patient %}
+<li class="breadcrumb-item"><a href="{% url 'patients:patient_detail' patient.pk %}">{{ patient.last_name }} {{ patient.first_name }}</a></li>
+<li class="breadcrumb-item active">Редактирование</li>
+{% else %}
+<li class="breadcrumb-item active">Новый пациент</li>
+{% endif %}
+{% endblock %}
+
+{% block page_title %}
+<i class="bi bi-person-vcard me-2"></i>{{ title }}
+{% endblock %}
+
+{% block content %}
+<form method="post" novalidate>
+    {% csrf_token %}
+    
+    <!-- Навигация по разделам формы -->
+    <ul class="nav nav-tabs mb-4" id="patientFormTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic" type="button">
+                <i class="bi bi-person me-1"></i>Основные данные
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#documents" type="button">
+                <i class="bi bi-file-text me-1"></i>Документы
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="hospitalization-tab" data-bs-toggle="tab" data-bs-target="#hospitalization" type="button">
+                <i class="bi bi-hospital me-1"></i>Госпитализация
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="discharge-tab" data-bs-toggle="tab" data-bs-target="#discharge" type="button">
+                <i class="bi bi-box-arrow-right me-1"></i>Выписка
+            </button>
+        </li>
+    </ul>
+    
+    <div class="tab-content" id="patientFormContent">
+        <!-- Основные данные -->
+        <div class="tab-pane fade show active" id="basic" role="tabpanel">
+            <div class="row">
+                <div class="col-md-12 mb-3">
+                    <h5><i class="bi bi-person-lines-fill me-2"></i>Личные данные</h5>
+                    <hr>
+                </div>
+                
+                <div class="col-md-4">
+                    {{ form.last_name|as_crispy_field }}
+                </div>
+                <div class="col-md-4">
+                    {{ form.first_name|as_crispy_field }}
+                </div>
+                <div class="col-md-4">
+                    {{ form.middle_name|as_crispy_field }}
+                </div>
+                
+                <div class="col-md-3">
+                    {{ form.gender|as_crispy_field }}
+                </div>
+                <div class="col-md-3">
+                    {{ form.birth_date|as_crispy_field }}
+                </div>
+                <div class="col-md-3">
+                    {{ form.birth_place|as_crispy_field }}
+                </div>
+                <div class="col-md-3">
+                    {{ form.citizenship|as_crispy_field }}
+                </div>
+                
+                <div class="col-md-12">
+                    {{ form.address|as_crispy_field }}
+                </div>
+                
+                <div class="col-md-6">
+                    {{ form.phone|as_crispy_field }}
+                </div>
+                
+                <!-- Социальные данные -->
+                <div class="col-md-12 mb-3 mt-4">
+                    <h5><i class="bi bi-briefcase me-2"></i>Социальные данные</h5>
+                    <hr>
+                </div>
+                
+                <div class="col-md-4">
+                    {{ form.workplace|as_crispy_field }}
+                </div>
+                <div class="col-md-4">
+                    {{ form.position|as_crispy_field }}
+                </div>
+                <div class="col-md-4">
+                    {{ form.profession|as_crispy_field }}
+                </div>
+                
+                <div class="col-md-3">
+                    {{ form.marital_status|as_crispy_field }}
+                </div>
+                <div class="col-md-3">
+                    {{ form.education|as_crispy_field }}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Документы -->
+        <div class="tab-pane fade" id="documents" role="tabpanel">
+            <div class="row">
+                <div class="col-md-12 mb-3">
+                    <h5><i class="bi bi-passport me-2"></i>Паспортные данные</h5>
+                    <hr>
+                </div>
+                
+                <div class="col-md-3">
+                    {{ form.passport_series|as_crispy_field }}
+                </div>
+                <div class="col-md-3">
+                    {{ form.passport_number|as_crispy_field }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.passport_issue_date|as_crispy_field }}
+                </div>
+                
+                <div class="col-md-12">
+                    {{ form.passport_issued_by|as_crispy_field }}
+                </div>
+                
+                <div class="col-md-12 mb-3 mt-4">
+                    <h5><i class="bi bi-card-checklist me-2"></i>Другие документы</h5>
+                    <hr>
+                </div>
+                
+                <div class="col-md-6">
+                    {{ form.snils|as_crispy_field }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.insurance_policy|as_crispy_field }}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Госпитализация -->
+        <div class="tab-pane fade" id="hospitalization" role="tabpanel">
+            <div class="row">
+                <div class="col-md-12 mb-3">
+                    <h5><i class="bi bi-calendar-plus me-2"></i>Данные о поступлении</h5>
+                    <hr>
+                </div>
+                
+                <div class="col-md-6">
+                    {{ form.admission_date|as_crispy_field }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.attending_physician|as_crispy_field }}
+                </div>
+                
+                <div class="col-md-6">
+                    {{ form.admission_from|as_crispy_field }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.delivered_by|as_crispy_field }}
+                </div>
+                
+                <div class="col-md-12">
+                    {{ form.referral_diagnosis|as_crispy_field }}
+                </div>
+                
+                <div class="col-md-8">
+                    {{ form.admission_diagnosis|as_crispy_field }}
+                </div>
+                <div class="col-md-4">
+                    {{ form.admission_mkb_code|as_crispy_field }}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Выписка -->
+        <div class="tab-pane fade" id="discharge" role="tabpanel">
+            <div class="row">
+                <div class="col-md-12 mb-3">
+                    <h5><i class="bi bi-calendar-check me-2"></i>Данные о выписке</h5>
+                    <hr>
+                </div>
+                
+                <div class="col-md-6">
+                    {{ form.discharge_date|as_crispy_field }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.status|as_crispy_field }}
+                </div>
+                
+                <div class="col-md-8">
+                    {{ form.discharge_diagnosis|as_crispy_field }}
+                </div>
+                <div class="col-md-4">
+                    {{ form.discharge_mkb_code|as_crispy_field }}
+                </div>
+                
+                <div class="col-md-6">
+                    {{ form.outcome|as_crispy_field }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.work_capacity|as_crispy_field }}
+                </div>
+                
+                <div class="col-md-12 mb-3 mt-4">
+                    <h5><i class="bi bi-sticky me-2"></i>Примечания</h5>
+                    <hr>
+                </div>
+                
+                <div class="col-md-12">
+                    {{ form.notes|as_crispy_field }}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Кнопки формы -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <a href="{% if patient %}{% url 'patients:patient_detail' patient.pk %}{% else %}{% url 'patients:patient_list' %}{% endif %}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>Отмена
+                    </a>
+                </div>
+                <div>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-circle me-1"></i>{{ submit_text }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Автоматическое переключение вкладок при ошибках валидации
+    const errorFields = document.querySelectorAll('.is-invalid');
+    if (errorFields.length > 0) {
+        // Находим первую вкладку с ошибкой
+        for (let field of errorFields) {
+            const tabId = field.closest('.tab-pane').id;
+            const tabButton = document.querySelector(`[data-bs-target="#${tabId}"]`);
+            if (tabButton) {
+                new bootstrap.Tab(tabButton).show();
+                break;
+            }
+        }
+    }
+    
+    // Показываем/скрываем поля выписки в зависимости от статуса
+    const statusField = document.getElementById('id_status');
+    const dischargeFields = document.querySelectorAll('#discharge .form-control, #discharge .form-select');
+    
+    function toggleDischargeFields() {
+        const isHospitalized = statusField.value === 'HOSPITALIZED';
+        dischargeFields.forEach(field => {
+            if (field.id !== 'id_status') {
+                field.disabled = isHospitalized;
+                field.required = !isHospitalized;
+            }
+        });
+    }
+    
+    if (statusField) {
+        statusField.addEventListener('change', toggleDischargeFields);
+        toggleDischargeFields(); // Инициализация при загрузке
+    }
+});
+</script>
+{% endblock %}

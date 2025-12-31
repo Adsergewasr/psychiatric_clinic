@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Экспорт пациентов - Психиатрическая больница{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'patients:patient_list' %}">Пациенты</a></li>
+<li class="breadcrumb-item active">Экспорт</li>
+{% endblock %}
+
+{% block page_title %}
+<i class="bi bi-download me-2"></i>Экспорт пациентов
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Настройки экспорта</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <!-- Выбор пациентов -->
+                    <div class="mb-4">
+                        <h6 class="mb-3">
+                            <i class="bi bi-people me-2"></i>Выберите пациентов для экспорта
+                        </h6>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="selectAll">
+                            <label class="form-check-label" for="selectAll">
+                                <strong>Выбрать всех пациентов ({{ total_patients }})</strong>
+                            </label>
+                        </div>
+                        
+                        <div style="max-height: 300px; overflow-y: auto;" class="border p-3 rounded">
+                            {{ form.patients }}
+                        </div>
+                    </div>
+                    
+                    <!-- Формат экспорта -->
+                    <div class="mb-4">
+                        <h6 class="mb-3">
+                            <i class="bi bi-file-earmark me-2"></i>Формат файла
+                        </h6>
+                        <div class="row">
+                            {% for choice in form.export_format %}
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    {{ choice.tag }}
+                                    <label class="form-check-label" for="{{ choice.id_for_label }}">
+                                        {% if choice.choice_label == 'CSV' %}
+                                        <i class="bi bi-filetype-csv text-success me-1"></i>
+                                        {% elif choice.choice_label == 'Excel (XLSX)' %}
+                                        <i class="bi bi-file-earmark-excel text-success me-1"></i>
+                                        {% else %}
+                                        <i class="bi bi-filetype-json text-warning me-1"></i>
+                                        {% endif %}
+                                        {{ choice.choice_label }}
+                                    </label>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <!-- Выбор полей -->
+                    <div class="mb-4">
+                        <h6 class="mb-3">
+                            <i class="bi bi-list-check me-2"></i>Включаемые данные
+                        </h6>
+                        <div class="row">
+                            {% for choice in form.include_fields %}
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    {{ choice.tag }}
+                                    <label class="form-check-label" for="{{ choice.id_for_label }}">
+                                        {% if choice.choice_label == 'Основные данные' %}
+                                        <i class="bi bi-person me-1"></i>
+                                        {% elif choice.choice_label == 'Документы' %}
+                                        <i class="bi bi-file-text me-1"></i>
+                                        {% elif choice.choice_label == 'Данные госпитализации' %}
+                                        <i class="bi bi-hospital me-1"></i>
+                                        {% elif choice.choice_label == 'Данные выписки' %}
+                                        <i class="bi bi-box-arrow-right me-1"></i>
+                                        {% else %}
+                                        <i class="bi bi-sticky me-1"></i>
+                                        {% endif %}
+                                        {{ choice.choice_label }}
+                                    </label>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <!-- Кнопки -->
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'patients:patient_list' %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left me-1"></i>Отмена
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-download me-1"></i>Экспортировать
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-info-circle me-2"></i>Справка по экспорту
+                </h5>
+            </div>
+            <div class="card-body">
+                <h6>Форматы файлов:</h6>
+                <ul class="list-unstyled mb-4">
+                    <li class="mb-2">
+                        <i class="bi bi-file-earmark-excel text-success me-2"></i>
+                        <strong>Excel (XLSX)</strong><br>
+                        <small class="text-muted">Рекомендуемый формат. Поддерживает кириллицу и форматирование.</small>
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-filetype-csv text-success me-2"></i>
+                        <strong>CSV</strong><br>
+                        <small class="text-muted">Простой текстовый формат. Идеален для импорта в другие системы.</small>
+                    </li>
+                    <li>
+                        <i class="bi bi-filetype-json text-warning me-2"></i>
+                        <strong>JSON</strong><br>
+                        <small class="text-muted">Структурированный формат для программистов и веб-приложений.</small>
+                    </li>
+                </ul>
+                
+                <h6>Рекомендации:</h6>
+                <ul class="small">
+                    <li>Для ежедневного использования выбирайте Excel формат</li>
+                    <li>Для передачи данных в другие системы используйте CSV</li>
+                    <li>Для архивного хранения используйте все включенные поля</li>
+                    <li>Экспорт большого количества данных может занять несколько секунд</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Выделение всех пациентов
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const patientCheckboxes = document.querySelectorAll('input[name="patients"]');
+    
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            const isChecked = this.checked;
+            patientCheckboxes.forEach(checkbox => {
+                checkbox.checked = isChecked;
+            });
+        });
+    }
+    
+    // Проверка выбора хотя бы одного пациента
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const checkedPatients = document.querySelectorAll('input[name="patients"]:checked').length;
+        if (checkedPatients === 0) {
+            e.preventDefault();
+            alert('Пожалуйста, выберите хотя бы одного пациента для экспорта.');
+        }
+    });
+});
+</script>
+{% endblock %}

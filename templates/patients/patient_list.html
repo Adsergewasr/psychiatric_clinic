@@ -152,9 +152,9 @@
                         </td>
                         <td>
                             {% if patient.attending_physician %}
-                            {{ patient.attending_physician.get_full_name|default:patient.attending_physician.username }}
+                                {{ patient.attending_physician.get_full_name|default:patient.attending_physician.username }}
                             {% else %}
-                            <span class="text-muted">Не назначен</span>
+                                <span class="text-muted">Не назначен</span>
                             {% endif %}
                         </td>
                         <td>
@@ -166,7 +166,7 @@
                                     <i class="bi bi-pencil"></i>
                                 </a>
                                 {% if patient.status == 'HOSPITALIZED' %}
-                                <a href="{% url 'patients:patient_discharge' patient.pk %}" class="btn btn-outline-success" title="Выписать" onclick="return confirm('Выписать пациента {{ patient.full_name }}?')">
+                                <a href="{% url 'patients:patient_discharge' patient.pk %}" class="btn btn-outline-success" title="Выписать" onclick="return confirm('Выписать пациента {{ patient.last_name }} {{ patient.first_name }}?')">
                                     <i class="bi bi-box-arrow-right"></i>
                                 </a>
                                 {% endif %}

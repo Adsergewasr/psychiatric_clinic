@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}{{ patient.full_name }} - Психиатрическая больница{% endblock %}
+{% block title %}{{ patient.last_name }} {{ patient.first_name }} - Психиатрическая больница{% endblock %}
 
 {% block breadcrumb_items %}
 <li class="breadcrumb-item"><a href="{% url 'patients:patient_list' %}">Пациенты</a></li>
@@ -29,7 +29,7 @@
             {% endif %}
             
             {% if patient.status == 'HOSPITALIZED' and can_edit %}
-            <a href="{% url 'patients:patient_discharge' patient.pk %}" class="btn btn-success" onclick="return confirm('Выписать пациента {{ patient.full_name }}?')">
+            <a href="{% url 'patients:patient_discharge' patient.pk %}" class="btn btn-success" onclick="return confirm('Выписать пациента {{ patient.last_name }} {{ patient.first_name }}?')">
                 <i class="bi bi-box-arrow-right me-1"></i>Выписать
             </a>
             {% endif %}
@@ -154,7 +154,11 @@
                 <div class="row">
                     <div class="col-md-6">
                         <strong>Лечащий врач:</strong><br>
-                        {{ patient.attending_physician.get_full_name|default:patient.attending_physician.username|default:"Не назначен" }}
+                        {% if patient.attending_physician %}
+                            {{ patient.attending_physician.get_full_name|default:patient.attending_physician.username }}
+                        {% else %}
+                            <span class="text-muted">Не назначен</span>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -279,17 +283,29 @@
             <div class="card-body">
                 <div class="mb-2">
                     <small class="text-muted">Создано:</small><br>
-                    {{ patient.created_at|date:"d.m.Y H:i" }}
+                    {% if patient.created_at %}
+                        {{ patient.created_at|date:"d.m.Y H:i" }}
+                    {% else %}
+                        <span class="text-muted">Не указано</span>
+                    {% endif %}
                 </div>
                 
                 <div class="mb-2">
                     <small class="text-muted">Кем создано:</small><br>
-                    {{ patient.created_by.get_full_name|default:patient.created_by.username }}
+                    {% if patient.created_by %}
+                        {{ patient.created_by.get_full_name|default:patient.created_by.username }}
+                    {% else %}
+                        <span class="text-muted">Система</span>
+                    {% endif %}
                 </div>
                 
                 <div>
                     <small class="text-muted">Последнее изменение:</small><br>
-                    {{ patient.updated_at|date:"d.m.Y H:i" }}
+                    {% if patient.updated_at %}
+                        {{ patient.updated_at|date:"d.m.Y H:i" }}
+                    {% else %}
+                        <span class="text-muted">Не указано</span>
+                    {% endif %}
                 </div>
             </div>
         </div>

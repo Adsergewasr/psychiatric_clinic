@@ -125,16 +125,27 @@ def patient_detail(request, pk):
     # Получаем историю госпитализаций
     hospitalizations = patient.hospitalizations.all()
     
+    # Подготовим данные для шаблона
     context = {
         'patient': patient,
         'hospitalizations': hospitalizations,
         'can_edit': request.user.has_perm('patients.change_patient') or 
-                    patient.attending_physician == request.user,
+                    (patient.attending_physician and patient.attending_physician == request.user),
         'can_delete': request.user.has_perm('patients.delete_patient'),
     }
     
+    # Добавим безопасные атрибуты
+    if patient.attending_physician:
+        context['attending_physician_name'] = patient.attending_physician.get_full_name() or patient.attending_physician.username
+    else:
+        context['attending_physician_name'] = "Не назначен"
+    
+    if patient.created_by:
+        context['created_by_name'] = patient.created_by.get_full_name() or patient.created_by.username
+    else:
+        context['created_by_name'] = "Система"
+    
     return render(request, 'patients/patient_detail.html', context)
-
 
 @login_required
 def patient_update(request, pk):

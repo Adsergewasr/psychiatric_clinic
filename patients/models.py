@@ -26,6 +26,14 @@ class Patient(models.Model):
         HIGHER = 'H', 'Высшее'
         UNFINISHED_HIGHER = 'UH', 'Неоконченное высшее'
     
+        @property
+        def full_name(self):
+            """Полное ФИО пациента"""
+            parts = [self.last_name, self.first_name]
+            if self.middle_name:
+                parts.append(self.middle_name)
+            return ' '.join(parts)
+        
     # === РАЗДЕЛ 1: ОБЩИЕ СВЕДЕНИЯ ===
     # 1. Фамилия, имя, отчество
     last_name = models.CharField('Фамилия', max_length=100)

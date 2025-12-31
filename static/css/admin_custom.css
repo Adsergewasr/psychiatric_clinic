@@ -1,0 +1,76 @@
+/* Кастомные стили для админки */
+
+/* Цвета статусов */
+.status-hospitalized {
+    color: #e67e22;
+    font-weight: bold;
+}
+
+.status-discharged {
+    color: #27ae60;
+    font-weight: bold;
+}
+
+.status-transferred {
+    color: #3498db;
+    font-weight: bold;
+}
+
+.status-died {
+    color: #e74c3c;
+    font-weight: bold;
+}
+
+/* Карточки пациентов */
+.patient-card {
+    border-left: 5px solid #3498db;
+    margin-bottom: 10px;
+    padding: 10px;
+    background: #f8f9fa;
+}
+
+/* Кнопки действий */
+.action-button {
+    margin: 0 2px;
+    padding: 3px 8px;
+    border-radius: 3px;
+    text-decoration: none;
+    font-size: 12px;
+}
+
+.btn-view {
+    background: #3498db;
+    color: white;
+}
+
+.btn-discharge {
+    background: #27ae60;
+    color: white;
+}
+
+.btn-edit {
+    background: #f39c12;
+    color: white;
+}
+
+/* Таблицы */
+.table-hover tbody tr:hover {
+    background-color: rgba(52, 152, 219, 0.1);
+}
+
+/* Панель фильтров */
+.filter-panel {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+/* Иконки в админке */
+.object-tools a {
+    background-color: #2c3e50;
+}
+
+.object-tools a:hover {
+    background-color: #1a252f;
+}

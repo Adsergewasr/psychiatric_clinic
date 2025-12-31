@@ -1,0 +1,7 @@
+{% extends "patients/base.html" %}
+
+{% block content %}
+<h1>Дашборд системы</h1>
+<p>Здесь будет статистика и основная информация.</p>
+<a href="{% url 'patients:patient_list' %}" class="btn btn-primary">Список пациентов</a>
+{% endblock %}

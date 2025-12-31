@@ -1,0 +1,7 @@
+{% extends "patients/base.html" %}
+
+{% block content %}
+<h1>Список пациентов</h1>
+<p>Здесь будет список пациентов.</p>
+<a href="{% url 'patients:patient_create' %}" class="btn btn-success">Добавить пациента</a>
+{% endblock %}

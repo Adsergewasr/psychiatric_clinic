@@ -1,3 +1,7 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load static %}
+
 {% if user.is_authenticated %}
 <form method="post" novalidate>
     {% csrf_token %}
@@ -27,9 +31,7 @@
         <i class="bi bi-exclamation-triangle me-2"></i>Только для вошедших пользователей
     </div>
 {% endif %}
-{% extends "base.html" %}
-{% load crispy_forms_tags %}
-{% load static %}
+
 
 {% block title %}{{ title }} - Психиатрическая больница{% endblock %}
 

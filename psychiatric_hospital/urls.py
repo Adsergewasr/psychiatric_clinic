@@ -65,6 +65,7 @@ admin.site.index_title = 'Управление системой'
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('patients.urls')),
+    path('users/', include('users.urls')),  # Добавьте эту строку
 ]
 
 if settings.DEBUG:  # Исправлено: DEBUG вместо DUG

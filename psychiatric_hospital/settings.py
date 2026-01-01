@@ -128,8 +128,8 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 # Login/Logout URLs
 LOGIN_URL = 'users:login'
-LOGIN_REDIRECT_URL = 'patients:patient_list'
-LOGOUT_REDIRECT_URL = 'users:login'
+LOGIN_REDIRECT_URL = 'patients:dashboard'  # После входа идем на дашборд
+LOGOUT_REDIRECT_URL = 'patients:dashboard'  # После выхода тоже на дашборд
 
 # Email settings (для разработки)
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Вход в систему - Психиатрическая больница{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6 col-lg-4">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white text-center">
+                <h4 class="mb-0">
+                    <i class="bi bi-hospital me-2"></i>
+                    Психиатрическая больница
+                </h4>
+                <small class="opacity-75">Форма №003/у</small>
+            </div>
+            
+            <div class="card-body">
+                {% if form.errors %}
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Неправильное имя пользователя или пароль.
+                </div>
+                {% endif %}
+                
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="id_username" class="form-label">
+                            <i class="bi bi-person me-1"></i>Имя пользователя
+                        </label>
+                        <input type="text" name="username" 
+                               class="form-control" id="id_username"
+                               required autofocus>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="id_password" class="form-label">
+                            <i class="bi bi-key me-1"></i>Пароль
+                        </label>
+                        <input type="password" name="password" 
+                               class="form-control" id="id_password"
+                               required>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>Войти
+                    </button>
+                </form>
+                
+                <hr class="my-4">
+                
+                <div class="text-center">
+                    <small class="text-muted">
+                        Для доступа к системе обратитесь к администратору
+                    </small>
+                </div>
+            </div>
+            
+            <div class="card-footer text-center bg-light">
+                <small class="text-muted">
+                    &copy; {% now "Y" %} Психиатрическая больница
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

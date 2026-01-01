@@ -1,68 +1,101 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Вход в систему - Психиатрическая больница{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center mt-5">
+<div class="row justify-content-center min-vh-80 align-items-center">
     <div class="col-md-6 col-lg-4">
-        <div class="card shadow">
-            <div class="card-header bg-primary text-white text-center">
-                <h4 class="mb-0">
-                    <i class="bi bi-hospital me-2"></i>
-                    Психиатрическая больница
-                </h4>
-                <small class="opacity-75">Форма №003/у</small>
+        <div class="card shadow-lg border-0">
+            <div class="card-header bg-primary text-white text-center py-4">
+                <div class="mb-3">
+                    <i class="bi bi-hospital fs-1"></i>
+                </div>
+                <h3 class="mb-1">Психиатрическая больница</h3>
+                <p class="mb-0 opacity-75">Форма №003/у</p>
             </div>
             
-            <div class="card-body">
+            <div class="card-body p-4">
                 {% if form.errors %}
-                <div class="alert alert-danger">
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
                     <i class="bi bi-exclamation-triangle me-2"></i>
                     Неправильное имя пользователя или пароль.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
                 {% endif %}
                 
-                <form method="post">
+                <form method="post" novalidate>
                     {% csrf_token %}
                     
                     <div class="mb-3">
-                        <label for="id_username" class="form-label">
+                        <label for="id_username" class="form-label fw-bold">
                             <i class="bi bi-person me-1"></i>Имя пользователя
                         </label>
-                        <input type="text" name="username" 
-                               class="form-control" id="id_username"
-                               required autofocus>
+                        {{ form.username }}
+                        {% if form.username.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.username.errors }}
+                        </div>
+                        {% endif %}
                     </div>
                     
                     <div class="mb-4">
-                        <label for="id_password" class="form-label">
+                        <label for="id_password" class="form-label fw-bold">
                             <i class="bi bi-key me-1"></i>Пароль
                         </label>
-                        <input type="password" name="password" 
-                               class="form-control" id="id_password"
-                               required>
+                        {{ form.password }}
+                        {% if form.password.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.password.errors }}
+                        </div>
+                        {% endif %}
                     </div>
                     
-                    <button type="submit" class="btn btn-primary w-100">
+                    <div class="mb-4 form-check">
+                        {{ form.remember_me }}
+                        <label class="form-check-label" for="id_remember_me">
+                            Запомнить меня
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-lg w-100 mb-3">
                         <i class="bi bi-box-arrow-in-right me-2"></i>Войти
                     </button>
+                    
+                    <div class="text-center">
+                        <a href="#" class="text-decoration-none text-muted small">
+                            <i class="bi bi-question-circle me-1"></i>Забыли пароль?
+                        </a>
+                    </div>
                 </form>
-                
-                <hr class="my-4">
-                
-                <div class="text-center">
-                    <small class="text-muted">
-                        Для доступа к системе обратитесь к администратору
-                    </small>
-                </div>
             </div>
             
-            <div class="card-footer text-center bg-light">
+            <div class="card-footer text-center py-3 bg-light">
                 <small class="text-muted">
-                    &copy; {% now "Y" %} Психиатрическая больница
+                    <i class="bi bi-shield-check me-1"></i>
+                    Доступ только для авторизованного персонала
                 </small>
             </div>
         </div>
+        
+        <div class="text-center mt-4">
+            <small class="text-muted">
+                &copy; {% now "Y" %} Психиатрическая больница. Все права защищены.
+            </small>
+        </div>
     </div>
 </div>
+
+<style>
+.min-vh-80 {
+    min-height: 80vh;
+}
+.card {
+    border-radius: 15px;
+}
+.form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+</style>
 {% endblock %}

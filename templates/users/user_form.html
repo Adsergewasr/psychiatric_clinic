@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block title %}{{ title }} - Психиатрическая больница{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'users:user_list' %}">Пользователи</a></li>
+{% if user %}
+<li class="breadcrumb-item"><a href="{% url 'users:user_detail' user.pk %}">{{ user.last_name }} {{ user.first_name }}</a></li>
+<li class="breadcrumb-item active">Редактирование</li>
+{% else %}
+<li class="breadcrumb-item active">Новый пользователь</li>
+{% endif %}
+{% endblock %}
+
+{% block page_title %}
+<i class="bi bi-person-vcard me-2"></i>{{ title }}
+{% endblock %}
+
+{% block content %}
+<form method="post" enctype="multipart/form-data" novalidate>
+    {% csrf_token %}
+    
+    <!-- Навигация по разделам формы -->
+    <ul class="nav nav-tabs mb-4" id="userFormTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic" type="button">
+                <i class="bi bi-person me-1"></i>Основные данные
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button">
+                <i class="bi bi-file-person me-1"></i>Профиль
+            </button>
+        </li>
+        {% if not user %}
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="password-tab" data-bs-toggle="tab" data-bs-target="#password" type="button">
+                <i class="bi bi-key me-1"></i>Пароль
+            </button>
+        </li>
+        {% endif %}
+    </ul>
+    
+    <div class="tab-content" id="userFormContent">
+        <!-- Основные данные -->
+        <div class="tab-pane fade show active" id="basic" role="tabpanel">
+            <div class="row">
+                <div class="col-md-12 mb-3">
+                    <h5><i class="bi bi-person-badge me-2"></i>Личные данные</h5>
+                    <hr>
+                </div>
+                
+                <div class="col-md-4">
+                    {{ user_form.username|as_crispy_field }}
+                </div>
+                <div class="col-md-4">
+                    {{ user_form.email|as_crispy_field }}
+                </div>
+                <div class="col-md-4">
+                    {{ user_form.phone|as_crispy_field }}
+                </div>
+                
+                <div class="col-md-4">
+                    {{ user_form.first_name|as_crispy_field }}
+                </div>
+                <div class="col-md-4">
+                    {{ user_form.last_name|as_crispy_field }}
+                </div>
+                <div class="col-md-4">
+                    {{ user_form.role|as_crispy_field }}
+                </div>
+                
+                {% if user %}
+                <div class="col-md-12">
+                    {{ user_form.is_active|as_crispy_field }}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="row mt-4">
+                <div class="col-md-12 mb-3">
+                    <h5><i class="bi bi-briefcase me-2"></i>Профессиональная информация</h5>
+                    <hr>
+                </div>
+                
+                <div class="col-md-6">
+                    {{ user_form.specialization|as_crispy_field }}
+                </div>
+                <div class="col-md-6">
+                    {{ user_form.department|as_crispy_field }}
+                </div>
+                
+                <div class="col-md-6">
+                    {{ user_form.medical_license|as_crispy_field }}
+                </div>
+            </div>
+            
+            {% if user %}
+            <div class="row mt-4">
+                <div class="col-md-12 mb-3">
+                    <h5><i class="bi bi-sticky me-2"></i>Примечания</h5>
+                    <hr>
+                </div>
+                
+                <div class="col-md-12">
+                    {{ user_form.notes|as_crispy_field }}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Профиль -->
+        <div class="tab-pane fade" id="profile" role="tabpanel">
+            <div class="row">
+                <div class="col-md-12 mb-3">
+                    <h5><i class="bi bi-file-person me-2"></i>Дополнительные данные</h5>
+                    <hr>
+                </div>
+                
+                <div class="col-md-4">
+                    {{ profile_form.middle_name|as_crispy_field }}
+                </div>
+                <div class="col-md-4">
+                    {{ profile_form.photo|as_crispy_field }}
+                </div>
+                <div class="col-md-4">
+                    {{ profile_form.signature|as_crispy_field }}
+                </div>
+                
+                <div class="col-md-6">
+                    {{ profile_form.experience_years|as_crispy_field }}
+                </div>
+            </div>
+            
+            <div class="row mt-4">
+                <div class="col-md-12 mb-3">
+                    <h5><i class="bi bi-mortarboard me-2"></i>Образование и квалификации</h5>
+                    <hr>
+                </div>
+                
+                <div class="col-md-12">
+                    {{ profile_form.education|as_crispy_field }}
+                </div>
+                
+                <div class="col-md-12">
+                    {{ profile_form.qualifications|as_crispy_field }}
+                </div>
+            </div>
+            
+            <div class="row mt-4">
+                <div class="col-md-12 mb-3">
+                    <h5><i class="bi bi-gear me-2"></i>Настройки интерфейса</h5>
+                    <hr>
+                </div>
+                
+                <div class="col-md-6">
+                    {{ profile_form.theme|as_crispy_field }}
+                </div>
+                <div class="col-md-6">
+                    {{ profile_form.language|as_crispy_field }}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Пароль (только при создании) -->
+        {% if not user %}
+        <div class="tab-pane fade" id="password" role="tabpanel">
+            <div class="row">
+                <div class="col-md-12 mb-3">
+                    <h5><i class="bi bi-shield-lock me-2"></i>Пароль пользователя</h5>
+                    <hr>
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Пароль должен содержать минимум 8 символов, включая буквы и цифры.
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    {{ user_form.password1|as_crispy_field }}
+                </div>
+                <div class="col-md-6">
+                    {{ user_form.password2|as_crispy_field }}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Кнопки формы -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <a href="{% if user %}{% url 'users:user_detail' user.pk %}{% else %}{% url 'users:user_list' %}{% endif %}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>Отмена
+                    </a>
+                </div>
+                <div>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-circle me-1"></i>{{ submit_text }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Автоматическое переключение вкладок при ошибках валидации
+    const errorFields = document.querySelectorAll('.is-invalid');
+    if (errorFields.length > 0) {
+        for (let field of errorFields) {
+            const tabPane = field.closest('.tab-pane');
+            if (tabPane) {
+                const tabId = tabPane.id;
+                const tabButton = document.querySelector(`[data-bs-target="#${tabId}"]`);
+                if (tabButton) {
+                    new bootstrap.Tab(tabButton).show();
+                    break;
+                }
+            }
+        }
+    }
+    
+    // Показываем предупреждение при смене роли на Администратор
+    const roleField = document.getElementById('id_role');
+    if (roleField) {
+        roleField.addEventListener('change', function() {
+            if (this.value === 'ADMIN') {
+                if (!confirm('Вы уверены, что хотите назначить роль Администратор? Этот пользователь получит полный доступ ко всем функциям системы.')) {
+                    this.value = 'DOCTOR';
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,288 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ user.get_full_name }} - Психиатрическая больница{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'users:user_list' %}">Пользователи</a></li>
+<li class="breadcrumb-item active">{{ user.last_name }} {{ user.first_name }}</li>
+{% endblock %}
+
+{% block page_title %}
+<i class="bi bi-person-vcard me-2"></i>Профиль пользователя
+{% endblock %}
+
+{% block content %}
+<!-- Кнопки действий -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="btn-group" role="group">
+            <a href="{% url 'users:user_list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Назад к списку
+            </a>
+            
+            {% if can_edit %}
+            <a href="{% url 'users:user_update' user.pk %}" class="btn btn-primary">
+                <i class="bi bi-pencil me-1"></i>Редактировать
+            </a>
+            {% endif %}
+            
+            {% if user != request.user and request.user.has_perm('users.can_manage_users') %}
+            <a href="{% url 'users:user_delete' user.pk %}" class="btn btn-danger">
+                <i class="bi bi-trash me-1"></i>Удалить
+            </a>
+            {% endif %}
+            
+            {% if user == request.user %}
+            <a href="{% url 'users:change_password' %}" class="btn btn-warning">
+                <i class="bi bi-key me-1"></i>Сменить пароль
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Основная информация -->
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-person-lines-fill me-2"></i>Основные данные
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <strong>ФИО:</strong><br>
+                        {{ user.last_name }} {{ user.first_name }}
+                        {% if user.profile.middle_name %}
+                            {{ user.profile.middle_name }}
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <strong>Роль:</strong><br>
+                        <span class="badge 
+                            {% if user.role == 'ADMIN' %}bg-primary
+                            {% elif user.role == 'DOCTOR' %}bg-info
+                            {% elif user.role == 'NURSE' %}bg-warning
+                            {% elif user.role == 'REGISTRAR' %}bg-success
+                            {% else %}bg-secondary{% endif %}">
+                            {{ user.get_role_display }}
+                        </span>
+                    </div>
+                    <div class="col-md-4">
+                        <strong>Статус:</strong><br>
+                        <span class="badge {% if user.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                            {% if user.is_active %}Активен{% else %}Неактивен{% endif %}
+                        </span>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Логин:</strong><br>
+                        {{ user.username }}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Email:</strong><br>
+                        {{ user.email|default:"Не указан" }}
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Телефон:</strong><br>
+                        {{ user.phone|default:"Не указан" }}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Дата регистрации:</strong><br>
+                        {{ user.date_joined|date:"d.m.Y H:i" }}
+                    </div>
+                </div>
+                
+                {% if user.specialization or user.department %}
+                <hr>
+                
+                <div class="row">
+                    {% if user.specialization %}
+                    <div class="col-md-6">
+                        <strong>Специализация:</strong><br>
+                        {{ user.specialization }}
+                    </div>
+                    {% endif %}
+                    
+                    {% if user.department %}
+                    <div class="col-md-6">
+                        <strong>Отделение:</strong><br>
+                        {{ user.department }}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                {% if user.medical_license %}
+                <hr>
+                
+                <div class="row">
+                    <div class="col-12">
+                        <strong>Медицинская лицензия:</strong><br>
+                        {{ user.medical_license }}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- История входов -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-clock-history me-2"></i>История входов
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if login_history %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Время</th>
+                                <th>IP адрес</th>
+                                <th>Статус</th>
+                                <th>Причина</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for login in login_history %}
+                            <tr class="{% if not login.success %}table-danger{% endif %}">
+                                <td>{{ login.login_time|date:"d.m.Y H:i" }}</td>
+                                <td>{{ login.ip_address }}</td>
+                                <td>
+                                    <span class="badge {% if login.success %}bg-success{% else %}bg-danger{% endif %}">
+                                        {% if login.success %}Успешно{% else %}Неудачно{% endif %}
+                                    </span>
+                                </td>
+                                <td>{{ login.failure_reason|default:"-" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-3">
+                    <i class="bi bi-clock-history text-muted fs-1"></i>
+                    <p class="text-muted mt-2">История входов отсутствует</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Боковая панель -->
+    <div class="col-md-4">
+        <!-- Фотография -->
+        <div class="card mb-4">
+            <div class="card-body text-center">
+                {% if user.profile.photo %}
+                <img src="{{ user.profile.photo.url }}" 
+                     alt="{{ user.get_full_name }}" 
+                     class="img-fluid rounded-circle mb-3"
+                     style="width: 150px; height: 150px; object-fit: cover;">
+                {% else %}
+                <div class="mb-3">
+                    <i class="bi bi-person-circle text-muted" style="font-size: 8rem;"></i>
+                </div>
+                {% endif %}
+                
+                <h5 class="card-title">{{ user.get_full_name }}</h5>
+                <p class="text-muted mb-0">{{ user.get_role_display }}</p>
+                
+                {% if user.profile.experience_years %}
+                <p class="mt-2 mb-0">
+                    <small class="text-muted">
+                        <i class="bi bi-briefcase me-1"></i>
+                        Стаж: {{ user.profile.experience_years }} лет
+                    </small>
+                </p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Профессиональная информация -->
+        {% if user.profile.education or user.profile.qualifications %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-award me-2"></i>Образование и квалификации
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if user.profile.education %}
+                <div class="mb-3">
+                    <strong>Образование:</strong><br>
+                    <small class="text-muted">{{ user.profile.education|linebreaks }}</small>
+                </div>
+                {% endif %}
+                
+                {% if user.profile.qualifications %}
+                <div>
+                    <strong>Квалификации:</strong><br>
+                    <small class="text-muted">{{ user.profile.qualifications|linebreaks }}</small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Настройки -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-gear me-2"></i>Настройки
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-2">
+                    <strong>Тема интерфейса:</strong><br>
+                    {{ user.profile.get_theme_display }}
+                </div>
+                
+                <div class="mb-2">
+                    <strong>Язык интерфейса:</strong><br>
+                    {{ user.profile.get_language_display }}
+                </div>
+                
+                {% if user.profile.last_login_ip %}
+                <div>
+                    <strong>Последний IP входа:</strong><br>
+                    {{ user.profile.last_login_ip }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Примечания -->
+{% if user.notes %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-sticky me-2"></i>Примечания
+                </h5>
+            </div>
+            <div class="card-body">
+                {{ user.notes|linebreaks }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Удаление пользователя - Психиатрическая больница{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'users:user_list' %}">Пользователи</a></li>
+<li class="breadcrumb-item"><a href="{% url 'users:user_detail' user.pk %}">{{ user.last_name }} {{ user.first_name }}</a></li>
+<li class="breadcrumb-item active">Удаление</li>
+{% endblock %}
+
+{% block page_title %}
+<i class="bi bi-exclamation-triangle me-2"></i>Подтверждение удаления
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-exclamation-octagon me-2"></i>Внимание!
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <i class="bi bi-person-x text-danger display-1"></i>
+                </div>
+                
+                <h4 class="text-center mb-4">Вы уверены, что хотите удалить пользователя?</h4>
+                
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5>{{ user.last_name }} {{ user.first_name }}</h5>
+                        <p class="mb-1"><strong>Логин:</strong> {{ user.username }}</p>
+                        <p class="mb-1"><strong>Роль:</strong> {{ user.get_role_display }}</p>
+                        <p class="mb-1"><strong>Email:</strong> {{ user.email|default:"Не указан" }}</p>
+                        <p class="mb-0"><strong>Статус:</strong> 
+                            <span class="badge {% if user.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                                {% if user.is_active %}Активен{% else %}Неактивен{% endif %}
+                            </span>
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <strong>Это действие нельзя отменить!</strong><br>
+                    Все данные пользователя будут удалены безвозвратно, включая:
+                    <ul class="mb-0 mt-2">
+                        <li>Профиль пользователя</li>
+                        <li>Историю входов</li>
+                        <li>Настройки интерфейса</li>
+                    </ul>
+                </div>
+                
+                {% if user == request.user %}
+                <div class="alert alert-danger">
+                    <i class="bi bi-x-octagon me-2"></i>
+                    <strong>Вы не можете удалить свою собственную учетную запись!</strong><br>
+                    Обратитесь к другому администратору для выполнения этой операции.
+                </div>
+                {% endif %}
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'users:user_detail' user.pk %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left me-1"></i>Отмена
+                        </a>
+                        {% if user != request.user %}
+                        <button type="submit" class="btn btn-danger" {% if user == request.user %}disabled{% endif %}>
+                            <i class="bi bi-trash me-1"></i>Да, удалить
+                        </button>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

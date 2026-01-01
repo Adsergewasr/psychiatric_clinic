@@ -5,6 +5,8 @@ import os
 from pathlib import Path
 from decouple import config
 
+AUTH_USER_MODEL = 'users.User'
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -94,6 +96,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {
+            'min_length': 8,
+        }
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
@@ -135,7 +140,8 @@ LOGOUT_REDIRECT_URL = 'patients:dashboard'  # После выхода тоже �
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # Session settings
-SESSION_COOKIE_AGE = 3600  # 1 час
+SESSION_COOKIE_AGE = 86400  # 1 день (в секундах)
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 SESSION_SAVE_EVERY_REQUEST = True
 
 # Import-Export settings

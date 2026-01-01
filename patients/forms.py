@@ -28,7 +28,7 @@ class PatientForm(forms.ModelForm):
             'passport_number': forms.TextInput(attrs={'class': 'form-control'}),
             'passport_issued_by': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
             'passport_issue_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'snils': forms.TextInput(attrs={'class': 'form-control'}),
+            'inn': forms.TextInput(attrs={'class': 'form-control'}),
             'insurance_policy': forms.TextInput(attrs={'class': 'form-control'}),
             'workplace': forms.TextInput(attrs={'class': 'form-control'}),
             'position': forms.TextInput(attrs={'class': 'form-control'}),

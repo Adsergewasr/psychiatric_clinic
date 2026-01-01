@@ -52,6 +52,27 @@
 #     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 # Четвёртая версия.
+# from django.contrib import admin
+# from django.urls import path, include
+# from django.conf import settings
+# from django.conf.urls.static import static
+
+# # Кастомный админ сайт
+# admin.site.site_header = 'Психиатрическая больница - Администрация'
+# admin.site.site_title = 'Админ-панель психиатрической больницы'
+# admin.site.index_title = 'Управление системой'
+
+# urlpatterns = [
+#     path('admin/', admin.site.urls),
+#     path('', include('patients.urls')),
+#     path('users/', include('users.urls')),  # Добавьте эту строку
+# ]
+
+# if settings.DEBUG:  # Исправлено: DEBUG вместо DUG
+#     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+#     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+# Пятая версия.
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
@@ -65,9 +86,9 @@ admin.site.index_title = 'Управление системой'
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('patients.urls')),
-    path('users/', include('users.urls')),  # Добавьте эту строку
+    path('users/', include('users.urls')),  # Подключаем приложение users
 ]
 
-if settings.DEBUG:  # Исправлено: DEBUG вместо DUG
+if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

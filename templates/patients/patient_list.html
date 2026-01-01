@@ -104,7 +104,7 @@
     </div>
     
     <div class="card-body">
-        {% if page_obj.object_list %}
+        {% if patients_with_perms or request.GET.query or request.GET.status or request.GET.gender or request.GET.date_from or request.GET.date_to %}
         <div class="table-responsive">
             <table class="table table-hover">
                 <thead>
@@ -131,7 +131,8 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for patient in page_obj %}
+                    {% for item in patients_with_perms %}
+                        {% with patient=item.patient can_edit=item.can_edit can_delete=item.can_delete can_discharge=item.can_discharge %}
                     <tr class="{% if patient.status == 'HOSPITALIZED' %}table-warning{% elif patient.status == 'DISCHARGED' %}table-success{% elif patient.status == 'DIED' %}table-danger{% endif %}">
                         <td>
                             <span class="badge bg-dark">{{ patient.case_number }}</span>
@@ -162,16 +163,24 @@
                                 <a href="{% url 'patients:patient_detail' patient.pk %}" class="btn btn-outline-primary" title="Просмотр">
                                     <i class="bi bi-eye"></i>
                                 </a>
+                                {% if can_edit %}
                                 <a href="{% url 'patients:patient_update' patient.pk %}" class="btn btn-outline-secondary" title="Редактировать">
                                     <i class="bi bi-pencil"></i>
                                 </a>
-                                {% if patient.status == 'HOSPITALIZED' %}
+                                {% endif %}
+                                {% if can_discharge %}
                                 <a href="{% url 'patients:patient_discharge' patient.pk %}" class="btn btn-outline-success" title="Выписать" onclick="return confirm('Выписать пациента {{ patient.last_name }} {{ patient.first_name }}?')">
                                     <i class="bi bi-box-arrow-right"></i>
                                 </a>
                                 {% endif %}
+                                {% if can_delete %}
+                                <a href="{% url 'patients:patient_delete' patient.pk %}" class="btn btn-outline-danger" title="Удалить">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                                {% endif %}
                             </div>
                         </td>
+                        {% endwith %}
                     </tr>
                     {% endfor %}
                 </tbody>

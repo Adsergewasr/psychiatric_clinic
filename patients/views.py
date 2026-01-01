@@ -1,27 +1,79 @@
-from django.db import models
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required, permission_required
-from django.contrib import messages
-from django.core.paginator import Paginator
-from django.http import JsonResponse, HttpResponse
-from django.db.models import Q
-from django.utils import timezone
-from django.views.decorators.http import require_POST
-import json
+
 import csv
+import json
 import pandas as pd
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+from django.db import models
+from django.db.models import Q
+from django.http import JsonResponse, HttpResponse
+from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse_lazy
+
+@login_required
+def patient_delete(request, pk):
+    """Удаление пациента с подтверждением"""
+    patient = get_object_or_404(Patient, pk=pk)
+    if request.method == 'POST':
+        patient.delete()
+        messages.success(request, 'Пациент удалён')
+        return redirect('patients:patient_list')
+    return render(request, 'patients/patient_confirm_delete.html', {'patient': patient})
+from django.utils import timezone
+from django.views.decorators.http import require_POST, require_http_methods
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 
-from .models import Patient, Diagnosis
 from .forms import PatientForm, PatientSearchForm, PatientExportForm
+from .models import Patient, Diagnosis
+from users.mixins import RoleRequiredMixin, PermissionRequiredMixin, ObjectPermissionMixin, role_required, permission_required
 
+@login_required
+def patient_update(request, pk):
+    """Редактирование пациента"""
+    patient = get_object_or_404(Patient, pk=pk)
+    if request.method == 'POST':
+        form = PatientForm(request.POST, instance=patient)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Данные пациента обновлены')
+            return redirect('patients:patient_detail', pk=patient.pk)
+    else:
+        form = PatientForm(instance=patient)
+    return render(request, 'patients/patient_form.html', {'form': form, 'patient': patient})
+
+@login_required
+def patient_create(request):
+    """Создание нового пациента"""
+    if request.method == 'POST':
+        form = PatientForm(request.POST)
+        if form.is_valid():
+            patient = form.save(commit=False)
+            patient.created_by = request.user
+            patient.save()
+            messages.success(request, 'Пациент успешно добавлен')
+            return redirect('patients:patient_detail', pk=patient.pk)
+    else:
+        form = PatientForm()
+    return render(request, 'patients/patient_form.html', {'form': form})
 
 @login_required
 def patient_list(request):
     """Список пациентов с поиском и фильтрацией"""
     form = PatientSearchForm(request.GET or None)
-    patients = Patient.objects.all().select_related('attending_physician')
+    
+    # Базовый queryset с учетом прав доступа
+    if request.user.is_administrator or request.user.has_perm('patients.view_all_patients'):
+        patients = Patient.objects.all()
+    elif request.user.is_doctor:
+        patients = Patient.objects.filter(attending_physician=request.user)
+    else:
+        # Медсестры, регистраторы, аналитики видят всех пациентов
+        patients = Patient.objects.all()
+    
+    patients = patients.select_related('attending_physician')
     
     # Применяем фильтры
     if form.is_valid():
@@ -30,7 +82,7 @@ def patient_list(request):
         gender = form.cleaned_data.get('gender')
         date_from = form.cleaned_data.get('date_from')
         date_to = form.cleaned_data.get('date_to')
-        
+
         if query:
             patients = patients.filter(
                 Q(last_name__icontains=query) |
@@ -39,180 +91,95 @@ def patient_list(request):
                 Q(case_number__icontains=query) |
                 Q(passport_series__icontains=query) |
                 Q(passport_number__icontains=query) |
-                Q(snils__icontains=query) |
+                Q(inn__icontains=query) |
                 Q(phone__icontains=query) |
                 Q(address__icontains=query)
             )
-        
         if status:
             patients = patients.filter(status=status)
-        
         if gender:
             patients = patients.filter(gender=gender)
-        
         if date_from:
             patients = patients.filter(admission_date__date__gte=date_from)
-        
         if date_to:
             patients = patients.filter(admission_date__date__lte=date_to)
-    
-    # Сортировка
-    sort_by = request.GET.get('sort', '-admission_date')
-    if sort_by.lstrip('-') in ['last_name', 'first_name', 'admission_date', 'birth_date']:
-        patients = patients.order_by(sort_by)
-    
-    # Пагинация
-    paginator = Paginator(patients, 25)  # 25 пациентов на странице
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    
+    # Статистика по статусам с учетом прав доступа
+    status_counts = {}
+    for status_code, status_name in Patient.STATUS_CHOICES:
+        if request.user.is_administrator or request.user.has_perm('patients.view_all_patients'):
+            status_counts[status_code] = Patient.objects.filter(status=status_code).count()
+        elif request.user.is_doctor:
+            status_counts[status_code] = Patient.objects.filter(
+                status=status_code,
+                attending_physician=request.user
+            ).count()
+        else:
+            status_counts[status_code] = Patient.objects.filter(status=status_code).count()
+
+    # Для каждого пациента вычисляем права
+    patient_permissions = []
+    for patient in patients:
+        can_edit = patient.user_can_edit(request.user)
+        can_delete = patient.user_can_delete(request.user)
+        can_discharge = (patient.status == 'HOSPITALIZED' and can_edit)
+        patient_permissions.append({
+            'patient': patient,
+            'can_edit': can_edit,
+            'can_delete': can_delete,
+            'can_discharge': can_discharge,
+        })
+
     context = {
-        'page_obj': page_obj,
+        'patients_with_perms': patient_permissions,
         'form': form,
         'total_patients': patients.count(),
-        'sort_by': sort_by,
-        'status_counts': {
-            'HOSPITALIZED': Patient.objects.filter(status='HOSPITALIZED').count(),
-            'DISCHARGED': Patient.objects.filter(status='DISCHARGED').count(),
-            'TRANSFERRED': Patient.objects.filter(status='TRANSFERRED').count(),
-            'DIED': Patient.objects.filter(status='DIED').count(),
-        }
+        'sort_by': request.GET.get('sort', '-admission_date'),
+        'status_counts': status_counts,
+        'can_create_patient': (
+            request.user.is_administrator or 
+            request.user.is_doctor or 
+            request.user.is_nurse or 
+            request.user.is_registrar
+        ),
     }
-    
     return render(request, 'patients/patient_list.html', context)
 
-
-@login_required
-@permission_required('patients.add_patient', raise_exception=True)
-def patient_create(request):
-    """Создание нового пациента"""
-    if request.method == 'POST':
-        form = PatientForm(request.POST, user=request.user)
-        if form.is_valid():
-            patient = form.save()
-            messages.success(
-                request,
-                f'Пациент {patient.full_name} успешно создан. '
-                f'Номер истории болезни: {patient.case_number}'
-            )
-            return redirect('patients:patient_detail', pk=patient.pk)
-    else:
-        form = PatientForm(user=request.user)
-    
-    context = {
-        'form': form,
-        'title': 'Создание новой карты пациента',
-        'submit_text': 'Создать карту',
-    }
-    
-    return render(request, 'patients/patient_form.html', context)
 
 
 @login_required
 def patient_detail(request, pk):
-    """Просмотр карты пациента"""
-    patient = get_object_or_404(
-        Patient.objects.select_related('attending_physician', 'created_by'),
-        pk=pk
-    )
-    
-    # Проверка прав доступа
-    if not request.user.has_perm('patients.view_patient'):
-        if patient.attending_physician != request.user:
-            messages.error(request, 'У вас нет прав для просмотра этой карты')
-            return redirect('patients:patient_list')
-    
+    patient = get_object_or_404(Patient.objects.select_related('attending_physician', 'created_by'), pk=pk)
+    # Проверка прав на просмотр этого пациента
+    if not patient.user_can_view(request.user):
+        messages.error(request, 'У вас нет прав для просмотра этой карты')
+        return redirect('patients:patient_list')
     # Получаем историю госпитализаций
     hospitalizations = patient.hospitalizations.all()
-    
-    # Подготовим данные для шаблона
+    # Определяем доступные действия
+    can_edit = patient.user_can_edit(request.user)
+    can_delete = patient.user_can_delete(request.user)
+    can_discharge = (patient.status == 'HOSPITALIZED' and can_edit)
     context = {
         'patient': patient,
         'hospitalizations': hospitalizations,
-        'can_edit': request.user.has_perm('patients.change_patient') or 
-                    (patient.attending_physician and patient.attending_physician == request.user),
-        'can_delete': request.user.has_perm('patients.delete_patient'),
+        'can_edit': can_edit,
+        'can_delete': can_delete,
+        'can_discharge': can_discharge,
     }
-    
-    # Добавим безопасные атрибуты
-    if patient.attending_physician:
-        context['attending_physician_name'] = patient.attending_physician.get_full_name() or patient.attending_physician.username
-    else:
-        context['attending_physician_name'] = "Не назначен"
-    
-    if patient.created_by:
-        context['created_by_name'] = patient.created_by.get_full_name() or patient.created_by.username
-    else:
-        context['created_by_name'] = "Система"
-    
     return render(request, 'patients/patient_detail.html', context)
 
-@login_required
-def patient_update(request, pk):
-    """Редактирование карты пациента"""
-    patient = get_object_or_404(Patient, pk=pk)
-    
-    # Проверка прав доступа
-    if not request.user.has_perm('patients.change_patient'):
-        if patient.attending_physician != request.user:
-            messages.error(request, 'У вас нет прав для редактирования этой карты')
-            return redirect('patients:patient_detail', pk=pk)
-    
-    if request.method == 'POST':
-        form = PatientForm(request.POST, instance=patient, user=request.user)
-        if form.is_valid():
-            patient = form.save()
-            messages.success(request, f'Карта пациента {patient.full_name} успешно обновлена')
-            return redirect('patients:patient_detail', pk=patient.pk)
-    else:
-        form = PatientForm(instance=patient, user=request.user)
-    
-    context = {
-        'form': form,
-        'patient': patient,
-        'title': f'Редактирование карты пациента: {patient.full_name}',
-        'submit_text': 'Сохранить изменения',
-    }
-    
-    return render(request, 'patients/patient_form.html', context)
 
+from django.views.decorators.http import require_http_methods
 
 @login_required
-@permission_required('patients.delete_patient', raise_exception=True)
-def patient_delete(request, pk):
-    """Удаление карты пациента"""
-    patient = get_object_or_404(Patient, pk=pk)
-    
-    if request.method == 'POST':
-        patient_name = patient.full_name
-        case_number = patient.case_number
-        patient.delete()
-        messages.success(
-            request,
-            f'Карта пациента {patient_name} (ИБ: {case_number}) удалена'
-        )
-        return redirect('patients:patient_list')
-    
-    context = {
-        'patient': patient,
-        'title': 'Подтверждение удаления',
-    }
-    
-    return render(request, 'patients/patient_confirm_delete.html', context)
-
-
-@login_required
-@require_POST
+@require_http_methods(["GET", "POST"])
 def patient_discharge(request, pk):
     """Быстрая выписка пациента"""
     patient = get_object_or_404(Patient, pk=pk)
-    
-    # Проверка прав доступа
-    if not request.user.has_perm('patients.change_patient'):
-        if patient.attending_physician != request.user:
-            messages.error(request, 'У вас нет прав для выписки этого пациента')
-            return redirect('patients:patient_detail', pk=pk)
-    
+    # Проверка прав на выписку через user_can_edit
+    if not (patient.status == 'HOSPITALIZED' and patient.user_can_edit(request.user)):
+        messages.error(request, 'У вас нет прав для выписки этого пациента')
+        return redirect('patients:patient_detail', pk=pk)
     if patient.status == 'HOSPITALIZED':
         patient.status = 'DISCHARGED'
         patient.discharge_date = timezone.now()
@@ -220,23 +187,34 @@ def patient_discharge(request, pk):
         messages.success(request, f'Пациент {patient.full_name} выписан')
     else:
         messages.warning(request, f'Пациент уже имеет статус: {patient.get_status_display()}')
-    
     return redirect('patients:patient_detail', pk=pk)
 
 
 @login_required
 def patient_export(request):
     """Экспорт пациентов"""
+    # Определяем доступный queryset пациентов
+    if request.user.is_administrator or request.user.has_perm('patients.view_all_patients'):
+        patients_queryset = Patient.objects.all()
+    elif request.user.is_doctor:
+        patients_queryset = Patient.objects.filter(attending_physician=request.user)
+    else:
+        patients_queryset = Patient.objects.all()
+
     if request.method == 'POST':
         form = PatientExportForm(request.POST)
+        form.fields['patients'].queryset = patients_queryset
         if form.is_valid():
             patients = form.cleaned_data['patients']
             export_format = form.cleaned_data['export_format']
             include_fields = form.cleaned_data.get('include_fields', [])
-            
+            # Проверка: пользователь может экспортировать только тех пациентов, которых может просматривать
+            for patient in patients:
+                if not patient.user_can_view(request.user):
+                    messages.error(request, 'Вы можете экспортировать только доступных вам пациентов')
+                    return redirect('patients:patient_export')
             # Подготовка данных для экспорта
             data = prepare_export_data(patients, include_fields)
-            
             if export_format == 'csv':
                 return export_csv(data, patients)
             elif export_format == 'xlsx':
@@ -244,19 +222,17 @@ def patient_export(request):
             elif export_format == 'json':
                 return export_json(data, patients)
     else:
-        # По умолчанию выбираем всех пациентов
-        patients = Patient.objects.all()
+        # По умолчанию выбираем всех доступных пациентов
         initial = {
-            'patients': patients,
+            'patients': patients_queryset,
             'include_fields': ['basic', 'documents', 'hospitalization'],
         }
         form = PatientExportForm(initial=initial)
-    
+        form.fields['patients'].queryset = patients_queryset
     context = {
         'form': form,
-        'total_patients': Patient.objects.count(),
+        'total_patients': patients_queryset.count(),
     }
-    
     return render(request, 'patients/patient_export.html', context)
 
 
@@ -288,7 +264,7 @@ def prepare_export_data(patients, include_fields):
                 'Номер паспорта': patient.passport_number,
                 'Кем выдан': patient.passport_issued_by,
                 'Дата выдачи': patient.passport_issue_date.strftime('%d.%m.%Y') if patient.passport_issue_date else '',
-                'СНИЛС': patient.snils,
+                'ИНН': patient.inn,
                 'Страховой полис': patient.insurance_policy,
             })
         
@@ -447,6 +423,18 @@ def dashboard(request):
     # Последние поступления
     recent_patients = Patient.objects.select_related('attending_physician').order_by('-admission_date')[:10]
     
+    can_export = (
+        request.user.is_administrator or
+        request.user.is_doctor or
+        request.user.is_analyst or
+        request.user.has_perm('patients.export_patients')
+    )
+    can_create = (
+        request.user.is_administrator or
+        request.user.is_doctor or
+        request.user.is_nurse or
+        request.user.is_registrar
+    )
     context = {
         'total_patients': total_patients,
         'hospitalized': hospitalized,
@@ -456,6 +444,80 @@ def dashboard(request):
         'gender_stats': gender_stats,
         'age_groups': age_groups,
         'recent_patients': recent_patients,
+        'can_export': can_export,
+        'can_create': can_create,
     }
-    
     return render(request, 'patients/dashboard.html', context)
+
+class PatientListView(RoleRequiredMixin, ListView):
+    """Список пациентов (классовое представление)"""
+    model = Patient
+    template_name = 'patients/patient_list.html'
+    context_object_name = 'patients'
+    paginate_by = 25
+    allowed_roles = ['ADMIN', 'DOCTOR', 'NURSE', 'REGISTRAR', 'ANALYST']
+    
+    def get_queryset(self):
+        queryset = super().get_queryset().select_related('attending_physician')
+        # Фильтрация по правам доступа
+        if not self.request.user.is_administrator:
+            if self.request.user.is_doctor:
+                queryset = queryset.filter(attending_physician=self.request.user)
+        return queryset
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Добавляем форму поиска и другие данные при необходимости
+        return context
+
+
+class PatientDetailView(ObjectPermissionMixin, DetailView):
+    """Просмотр карты пациента (классовое представление)"""
+    model = Patient
+    template_name = 'patients/patient_detail.html'
+    context_object_name = 'patient'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        patient = self.get_object()
+        context['hospitalizations'] = patient.hospitalizations.all()
+        context['can_edit'] = patient.user_can_edit(self.request.user)
+        context['can_delete'] = patient.user_can_delete(self.request.user)
+        context['can_discharge'] = (patient.status == 'HOSPITALIZED' and patient.user_can_edit(self.request.user))
+        return context
+
+
+class PatientCreateView(RoleRequiredMixin, CreateView):
+    model = Patient
+    form_class = PatientForm
+    template_name = 'patients/patient_form.html'
+    allowed_roles = ['ADMIN', 'DOCTOR', 'NURSE', 'REGISTRAR']
+    success_url = reverse_lazy('patients:patient_list')
+
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        messages.success(self.request, 'Пациент успешно добавлен')
+        return super().form_valid(form)
+
+
+class PatientUpdateView(ObjectPermissionMixin, UpdateView):
+    model = Patient
+    form_class = PatientForm
+    template_name = 'patients/patient_form.html'
+    success_url = reverse_lazy('patients:patient_list')
+
+    def form_valid(self, form):
+        messages.success(self.request, 'Данные пациента обновлены')
+        return super().form_valid(form)
+
+
+class PatientDeleteView(ObjectPermissionMixin, DeleteView):
+    model = Patient
+    template_name = 'patients/patient_confirm_delete.html'
+    success_url = reverse_lazy('patients:patient_list')
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(self.request, 'Пациент удалён')
+        return super().delete(request, *args, **kwargs)
+
+# Для будущего: можно добавить CBV для discharge, export и др.

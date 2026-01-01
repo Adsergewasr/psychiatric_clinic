@@ -39,7 +39,7 @@ class PatientAdmin(ImportExportModelAdmin):
         ('Документы', {
             'fields': (
                 ('passport_series', 'passport_number'),
-                'snils',
+                'inn',
                 'insurance_policy',
             ),
             'classes': ('collapse',),
@@ -103,8 +103,9 @@ class PatientAdmin(ImportExportModelAdmin):
 
 @admin.register(Hospitalization)
 class HospitalizationAdmin(admin.ModelAdmin):
-    list_display = ['patient', 'admission_date', 'discharge_date', 'department']
+    list_display = ['patient', 'admission_date', 'discharge_date', 'diagnosis', 'department']
     search_fields = ['patient__last_name', 'patient__first_name', 'diagnosis']
+    ordering = ['-admission_date', '-discharge_date', 'diagnosis', 'department']
 
 
 @admin.register(Diagnosis)

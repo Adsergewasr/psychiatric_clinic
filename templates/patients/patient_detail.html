@@ -27,13 +27,13 @@
                 <i class="bi bi-pencil me-1"></i>Редактировать
             </a>
             {% endif %}
-            
-            {% if patient.status == 'HOSPITALIZED' and can_edit %}
-            <a href="{% url 'patients:patient_discharge' patient.pk %}" class="btn btn-success" onclick="return confirm('Выписать пациента {{ patient.last_name }} {{ patient.first_name }}?')">
+
+            {% if can_discharge %}
+            <a href="{% url 'patients:patient_discharge' patient.pk %}" class="btn btn-success" onclick="return confirm('Выписать пациента {{ patient.full_name }}?')">
                 <i class="bi bi-box-arrow-right me-1"></i>Выписать
             </a>
             {% endif %}
-            
+
             {% if can_delete %}
             <a href="{% url 'patients:patient_delete' patient.pk %}" class="btn btn-danger">
                 <i class="bi bi-trash me-1"></i>Удалить

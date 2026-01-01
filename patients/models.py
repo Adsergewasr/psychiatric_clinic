@@ -1,9 +1,12 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator, MaxValueValidator
+
 from django.utils import timezone
+from django.conf import settings
 import uuid
 
+User = get_user_model()
 
 class Patient(models.Model):
     """Модель пациента по форме №003/у"""
@@ -113,7 +116,7 @@ class Patient(models.Model):
     # === РАЗДЕЛ 3: ДАННЫЕ О ЛЕЧЕНИИ ===
     # 18. Лечащий врач
     attending_physician = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -189,13 +192,13 @@ class Patient(models.Model):
     insurance_policy = models.CharField('Страховой полис', max_length=50, blank=True)
     
     # 30. СНИЛС
-    snils = models.CharField('СНИЛС', max_length=14, blank=True)
+    inn = models.CharField('ИНН', max_length=12, blank=True)
     
     # Системные поля
     created_at = models.DateTimeField('Дата создания', auto_now_add=True)
     updated_at = models.DateTimeField('Дата обновления', auto_now=True)
     created_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         related_name='created_patients',
@@ -212,7 +215,19 @@ class Patient(models.Model):
             models.Index(fields=['status']),
             models.Index(fields=['case_number']),
         ]
-    
+        permissions = [
+            ('view_all_patients', 'Может просматривать всех пациентов'),
+            ('edit_all_patients', 'Может редактировать всех пациентов'),
+            ('export_patients', 'Может экспортировать данные пациентов'),
+            ('view_statistics', 'Может просматривать статистику'),
+        ]
+        permissions = [
+            ('view_all_patients', 'Может просматривать всех пациентов'),
+            ('edit_all_patients', 'Может редактировать всех пациентов'),
+            ('export_patients', 'Может экспортировать данные пациентов'),
+            ('view_statistics', 'Может просматривать статистику'),
+        ]
+
     def __str__(self):
         return f'{self.last_name} {self.first_name} {self.middle_name} (ИБ: {self.case_number})'
     
@@ -221,16 +236,37 @@ class Patient(models.Model):
             # Генерируем номер истории болезни: Год-ПорядковыйНомер
             year = timezone.now().year
             last_case = Patient.objects.filter(case_number__startswith=f'{year}-').order_by('case_number').last()
-            
             if last_case:
                 last_num = int(last_case.case_number.split('-')[1])
                 new_num = last_num + 1
             else:
                 new_num = 1
-            
             self.case_number = f'{year}-{new_num:04d}'
-        
         super().save(*args, **kwargs)
+
+    def user_can_view(self, user):
+        """Проверяет, может ли пользователь просматривать этого пациента"""
+        if user.is_administrator:
+            return True
+        if user.is_doctor:
+            return self.attending_physician == user
+        if user.is_nurse or user.is_registrar or user.is_analyst:
+            return True
+        return False
+
+    def user_can_edit(self, user):
+        """Проверяет, может ли пользователь редактировать этого пациента"""
+        if user.is_administrator:
+            return True
+        if user.is_doctor:
+            return self.attending_physician == user
+        if user.is_nurse or user.is_registrar:
+            return not self.pk  # Только при создании (нет первичного ключа)
+        return False
+
+    def user_can_delete(self, user):
+        """Проверяет, может ли пользователь удалить этого пациента"""
+        return user.is_administrator
 
 
 class Hospitalization(models.Model):
@@ -247,7 +283,7 @@ class Hospitalization(models.Model):
     mkb_code = models.CharField('Код МКБ-10', max_length=20, blank=True)
     department = models.CharField('Отделение', max_length=100)
     attending_physician = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

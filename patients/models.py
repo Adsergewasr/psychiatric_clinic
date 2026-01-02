@@ -10,7 +10,14 @@ User = get_user_model()
 
 class Patient(models.Model):
     """Модель пациента по форме №003/у"""
-    
+
+    @property
+    def full_name(self):
+        """Полное ФИО пациента"""
+        parts = [self.last_name, self.first_name]
+        if self.middle_name:
+            parts.append(self.middle_name)
+
     class Gender(models.TextChoices):
         MALE = 'M', 'Мужской'
         FEMALE = 'F', 'Женский'
@@ -29,13 +36,7 @@ class Patient(models.Model):
         HIGHER = 'H', 'Высшее'
         UNFINISHED_HIGHER = 'UH', 'Неоконченное высшее'
     
-        @property
-        def full_name(self):
-            """Полное ФИО пациента"""
-            parts = [self.last_name, self.first_name]
-            if self.middle_name:
-                parts.append(self.middle_name)
-            return ' '.join(parts)
+
         
     # === РАЗДЕЛ 1: ОБЩИЕ СВЕДЕНИЯ ===
     # 1. Фамилия, имя, отчество

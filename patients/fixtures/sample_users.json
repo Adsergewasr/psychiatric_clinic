@@ -1,0 +1,112 @@
+[
+  {
+    "model": "users.user",
+    "pk": 1,
+    "fields": {
+      "password": "pbkdf2_sha256$600000$zxcvasdfqwer$abc123def456ghi789jkl012mno345pqr678stu901=",
+      "last_login": "2024-03-20T10:00:00Z",
+      "is_superuser": true,
+      "username": "admin",
+      "first_name": "Алексей",
+      "last_name": "Петров",
+      "email": "admin@psychiatric-clinic.ru",
+      "is_staff": true,
+      "is_active": true,
+      "date_joined": "2024-01-01T09:00:00Z",
+      "role": "ADMIN",
+      "middle_name": "Сергеевич",
+      "specialization": "Главный врач",
+      "phone": "+7 (495) 123-45-67",
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "users.user",
+    "pk": 2,
+    "fields": {
+      "password": "pbkdf2_sha256$600000$qwertyuiop$def456ghi789jkl012mno345pqr678stu901vwx234=",
+      "last_login": "2024-03-20T09:30:00Z",
+      "is_superuser": false,
+      "username": "doctor_sidorova",
+      "first_name": "Ирина",
+      "last_name": "Сидорова",
+      "email": "i.sidorova@psychiatric-clinic.ru",
+      "is_staff": true,
+      "is_active": true,
+      "date_joined": "2024-01-15T08:00:00Z",
+      "role": "DOCTOR",
+      "middle_name": "Викторовна",
+      "specialization": "Психиатр, психотерапевт",
+      "phone": "+7 (495) 234-56-78",
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "users.user",
+    "pk": 3,
+    "fields": {
+      "password": "pbkdf2_sha256$600000$asdfghjkl$ghi789jkl012mno345pqr678stu901vwx234yza567=",
+      "last_login": "2024-03-19T16:45:00Z",
+      "is_superuser": false,
+      "username": "doctor_kozlov",
+      "first_name": "Михаил",
+      "last_name": "Козлов",
+      "email": "m.kozlov@psychiatric-clinic.ru",
+      "is_staff": true,
+      "is_active": true,
+      "date_joined": "2024-01-20T08:30:00Z",
+      "role": "DOCTOR",
+      "middle_name": "Александрович",
+      "specialization": "Психиатр",
+      "phone": "+7 (495) 345-67-89",
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "users.user",
+    "pk": 4,
+    "fields": {
+      "password": "pbkdf2_sha256$600000$zxcvbnm$jkl012mno345pqr678stu901vwx234yza567bcd890=",
+      "last_login": "2024-03-20T11:15:00Z",
+      "is_superuser": false,
+      "username": "nurse_ivanova",
+      "first_name": "Ольга",
+      "last_name": "Иванова",
+      "email": "o.ivanova@psychiatric-clinic.ru",
+      "is_staff": true,
+      "is_active": true,
+      "date_joined": "2024-02-01T09:00:00Z",
+      "role": "NURSE",
+      "middle_name": "Петровна",
+      "specialization": "Старшая медицинская сестра",
+      "phone": "+7 (495) 456-78-90",
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "users.user",
+    "pk": 5,
+    "fields": {
+      "password": "pbkdf2_sha256$600000$qazwsxedc$mno345pqr678stu901vwx234yza567bcd890efg123=",
+      "last_login": "2024-03-20T08:20:00Z",
+      "is_superuser": false,
+      "username": "registrar_smirnov",
+      "first_name": "Дмитрий",
+      "last_name": "Смирнов",
+      "email": "d.smirnov@psychiatric-clinic.ru",
+      "is_staff": true,
+      "is_active": true,
+      "date_joined": "2024-02-10T08:00:00Z",
+      "role": "REGISTRAR",
+      "middle_name": "Игоревич",
+      "specialization": "Регистратор",
+      "phone": "+7 (495) 567-89-01",
+      "groups": [],
+      "user_permissions": []
+    }
+  }
+]

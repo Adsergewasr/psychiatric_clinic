@@ -81,11 +81,11 @@ WSGI_APPLICATION = 'psychiatric_hospital.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'psychiatric_db',
-        'USER': 'ghirin_admin',
-        'PASSWORD': 'my_password', # Тот, что вы указали в SQL
-        'HOST': '127.0.0.1',
-        'PORT': '5432',
+        'NAME': config('DJANGO_DB_NAME', default='psychiatric_db'),
+        'USER': config('DJANGO_DB_USER', default='ghirin_admin'),
+        'PASSWORD': config('DJANGO_DB_PASSWORD', default='my_password'),
+        'HOST': config('DJANGO_DB_HOST', default='127.0.0.1'),
+        'PORT': config('DJANGO_DB_PORT', default='5432'),
     }
 }
 

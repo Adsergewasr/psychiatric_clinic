@@ -1,24 +1,33 @@
 from django.urls import path
-from django.contrib.auth.decorators import login_required
-from . import views
+from .views_class_based import (
+    DashboardView,
+    PatientListView,
+    PatientDetailView,
+    PatientCreateView,
+    PatientUpdateView,
+    PatientDeleteView,
+    PatientDischargeView,
+    PatientExportView,
+    ApiDiagnosesView,
+)
 
 app_name = 'patients'
 
 urlpatterns = [
     # Основные маршруты
-    path('', views.dashboard, name='dashboard'),
-    path('patients/', views.patient_list, name='patient_list'),
-    path('patients/create/', views.patient_create, name='patient_create'),
-    path('patients/<int:pk>/', views.patient_detail, name='patient_detail'),
-    path('patients/<int:pk>/edit/', views.patient_update, name='patient_update'),
-    path('patients/<int:pk>/delete/', views.patient_delete, name='patient_delete'),
-    path('patients/<int:pk>/discharge/', views.patient_discharge, name='patient_discharge'),
+    path('', DashboardView.as_view(), name='dashboard'),
+    path('patients/', PatientListView.as_view(), name='patient_list'),
+    path('patients/create/', PatientCreateView.as_view(), name='patient_create'),
+    path('patients/<int:pk>/', PatientDetailView.as_view(), name='patient_detail'),
+    path('patients/<int:pk>/edit/', PatientUpdateView.as_view(), name='patient_update'),
+    path('patients/<int:pk>/delete/', PatientDeleteView.as_view(), name='patient_delete'),
+    path('patients/<int:pk>/discharge/', PatientDischargeView.as_view(), name='patient_discharge'),
     
     # Экспорт
-    path('patients/export/', views.patient_export, name='patient_export'),
+    path('patients/export/', PatientExportView.as_view(), name='patient_export'),
     
     # API
-    path('api/diagnoses/', views.api_diagnoses, name='api_diagnoses'),
+    path('api/diagnoses/', ApiDiagnosesView.as_view(), name='api_diagnoses'),
     
 
 ]

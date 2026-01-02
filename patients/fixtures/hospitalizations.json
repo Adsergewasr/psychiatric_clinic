@@ -1,0 +1,62 @@
+[
+  {
+    "model": "patients.hospitalization",
+    "pk": 1,
+    "fields": {
+      "patient": 1,
+      "admission_date": "2024-01-15",
+      "discharge_date": null,
+      "diagnosis": "F41.1 Генерализованное тревожное расстройство",
+      "mkb_code": "F41.1",
+      "department": "Психотерапевтическое отделение",
+      "attending_physician": 1,
+      "outcome": "",
+      "notes": "Первичная госпитализация. Назначена комплексная терапия."
+    }
+  },
+  {
+    "model": "patients.hospitalization",
+    "pk": 2,
+    "fields": {
+      "patient": 2,
+      "admission_date": "2024-01-20",
+      "discharge_date": "2024-02-10",
+      "diagnosis": "F32.1 Умеренный депрессивный эпизод",
+      "mkb_code": "F32.1",
+      "department": "Аффективное расстройство отделение",
+      "attending_physician": 2,
+      "outcome": "Улучшение",
+      "notes": "Курс антидепрессивной терапии дал положительный эффект."
+    }
+  },
+  {
+    "model": "patients.hospitalization",
+    "pk": 3,
+    "fields": {
+      "patient": 3,
+      "admission_date": "2024-02-05",
+      "discharge_date": null,
+      "diagnosis": "F20.0 Параноидная шизофрения",
+      "mkb_code": "F20.0",
+      "department": "Психиатрическое отделение №1",
+      "attending_physician": 1,
+      "outcome": "",
+      "notes": "Острое состояние. Начата антипсихотическая терапия."
+    }
+  },
+  {
+    "model": "patients.hospitalization",
+    "pk": 4,
+    "fields": {
+      "patient": 6,
+      "admission_date": "2020-05-10",
+      "discharge_date": "2020-06-01",
+      "diagnosis": "F43.1 Посттравматическое стрессовое расстройство",
+      "mkb_code": "F43.1",
+      "department": "Психотерапевтическое отделение",
+      "attending_physician": 1,
+      "outcome": "Улучшение",
+      "notes": "Предыдущая госпитализация по поводу ПТСР."
+    }
+  }
+]
